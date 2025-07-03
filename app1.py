@@ -6,6 +6,7 @@ from docx import Document
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from pdf2image import convert_from_path
+from PyPDF2 import PdfMerger
 import fitz  # PyMuPDF
 
 st.set_page_config(page_title="PDF Utility App", layout="centered")
@@ -47,38 +48,38 @@ if task == "Images to PDF":
             img_list[0].save(pdf_bytes, format='PDF', save_all=True, append_images=img_list[1:])
             st.download_button("📥 Download PDF", data=pdf_bytes.getvalue(), file_name="images_to_pdf.pdf")
 
-# 2. PDF Edit (Add Text)
-elif task == "Edit PDF (Add Text)":
-    st.header("✏️ Edit PDF - Add Custom Text to Pages")
-    pdf_file = st.file_uploader("Upload PDF", type="pdf")
-    if pdf_file:
-        doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
-        text_inputs = []
-        st.write("Enter text to add on each page:")
-        for i, page in enumerate(doc):
-            text = st.text_input(f"Text for Page {i+1}", key=f"text_page_{i}")
-            text_inputs.append(text)
-        if st.button("Apply and Download Edited PDF"):
-            for i, page in enumerate(doc):
-                if text_inputs[i]:
-                    page.insert_text((50, page.rect.height - 50), text_inputs[i], fontsize=12, color=(0, 0, 0))
-            output = io.BytesIO()
-            doc.save(output)
-            st.download_button("📥 Download Edited PDF", data=output.getvalue(), file_name="edited_custom.pdf")
-
-# 3. PDF to JPG
+# 2. PDF to JPG
+# 2. PDF to JPG
 elif task == "PDF to JPG":
     st.header("🧾 Convert PDF to JPG")
     pdf_file = st.file_uploader("Upload PDF", type="pdf")
     if pdf_file:
         with open("temp.pdf", "wb") as f:
             f.write(pdf_file.read())
-        images = convert_from_path("temp.pdf")
-        for i, image in enumerate(images):
-            img_buffer = io.BytesIO()
-            image.save(img_buffer, format="JPEG")
-            st.image(image, caption=f"Page {i+1}")
-            st.download_button(f"Download Page {i+1}", img_buffer.getvalue(), file_name=f"page_{i+1}.jpg")
+        try:
+            images = convert_from_path("temp.pdf")
+            for i, image in enumerate(images):
+                img_buffer = io.BytesIO()
+                image.save(img_buffer, format="JPEG")
+                st.image(image, caption=f"Page {i+1}")
+                st.download_button(f"Download Page {i+1}", img_buffer.getvalue(), file_name=f"page_{i+1}.jpg")
+        except Exception as e:
+            st.error(f"Error: {e}")
+
+
+
+elif task == "Merge PDFs":
+    st.header("📎 Merge Multiple PDFs")
+    pdf_files = st.file_uploader("Upload PDFs to merge", type="pdf", accept_multiple_files=True)
+    if pdf_files and st.button("Merge PDFs"):
+        merger = PdfMerger()
+        for pdf in pdf_files:
+            merger.append(pdf)
+        merged_output = io.BytesIO()
+        merger.write(merged_output)
+        merger.close()
+        st.download_button("📥 Download Merged PDF", data=merged_output.getvalue(), file_name="merged.pdf")
+
 
 # 4. DOCX to PDF
 elif task == "DOCX to PDF":
