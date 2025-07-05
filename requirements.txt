@@ -5,3 +5,5 @@ reportlab
 pdf2image
 PyMuPDF
 PyPDF2
+
+
