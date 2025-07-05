@@ -49,22 +49,22 @@ if task == "Images to PDF":
             st.download_button("📥 Download PDF", data=pdf_bytes.getvalue(), file_name="images_to_pdf.pdf")
 
 # 2. PDF to JPG
-# 2. PDF to JPG
 elif task == "PDF to JPG":
     st.header("🧾 Convert PDF to JPG")
     pdf_file = st.file_uploader("Upload PDF", type="pdf")
     if pdf_file:
-        with open("temp.pdf", "wb") as f:
-            f.write(pdf_file.read())
-        try:
-            images = convert_from_path("temp.pdf")
-            for i, image in enumerate(images):
-                img_buffer = io.BytesIO()
-                image.save(img_buffer, format="JPEG")
-                st.image(image, caption=f"Page {i+1}")
-                st.download_button(f"Download Page {i+1}", img_buffer.getvalue(), file_name=f"page_{i+1}.jpg")
-        except Exception as e:
-            st.error(f"Error: {e}")
+        doc = fitz.open(stream=pdf_file.read(), filetype="pdf")
+        for i, page in enumerate(doc):
+            pix = page.get_pixmap(dpi=150)
+            img_bytes = pix.tobytes("png")
+            st.image(img_bytes, caption=f"Page {i+1}")
+            st.download_button(
+                f"Download Page {i+1}",
+                data=img_bytes,
+                file_name=f"page_{i+1}.jpg",
+                mime="image/jpeg"
+            )
+
 
 
 
